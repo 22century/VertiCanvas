@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <script src="src/verticanvas.js"></script>
+    <title>縦書き</title>
+    <style type="text/css">
+        canvas {
+            border: solid #666 1px;
+        }
+        .control {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <article class="control">
+        <input id="next" type="button" value="ページ送り" />
+        <input id="prev" type="button" value="ページ戻り" />
+    </article>
+
+    <article>
+        <canvas id="reader"></canvas>
+        <canvas id="work"></canvas>
+    </article>
+
+    <article>
+
+    <label>
+        <textarea id="sampletext" cols="80" rows="10">
+        ABCDEFGHI
+        ＡＢＣＤＥＦＧＨＩ
+        あいうえおーかきくけこ〜さしすせそ！？
+        「鍵括弧」【隅付き括弧】｛中括弧｝
+        森鴎外（もりおうがい）
+        アイウエオカキクケコワヲン
+        𦙤 𦙾 𠗖 𠆢 𠆢 𠈓𠌫𠎁𠍱𠏹𠑊𪕐𠂢𠂤𠀗
+        1234567890
+        １２３４５６７８９０
+        </textarea>
+    </label>
+
+    </article>
+
+    <script>
+    var vCanvas = new VertiCanvas({
+        fontSize: 50,
+        fontFamily: "serif",
+        lineHeight: 0,
+        width: 800,
+        height: 500,
+        text: document.getElementById("sampletext").value
+    });
+    </script>
+
+</body>
+</html>
