@@ -32,33 +32,30 @@
 
     VertiCanvas.prototype = {
 
-        text            : "",
+        // public
+        text             : "",
+        width            : 100,
+        height           : 100,
+        mainCanvasId     : "reader",
+        fontSize         : 16,
+        fontFamily       : "serif",
+        lineHeight       : 10,
+
+        // private
         _charAry         : [],
         _imageCache      : {},
-
+        _cache           : {},
         _lastPoint       : 0,
-
-        width           : 100,
-        height          : 100,
-
-        mainCanvasId    : "reader",
         _mainCanvas      : null,
         _mainContext     : null,
-
         _workCanvasId    : "work",
         _workCanvas      : null,
         _workContext     : null,
-
-        fontSize        : 16,
-        fontFamily      : "serif",
         _fontStyle       : "",
         _letterSpacing   : "",
-        lineHeight      : 10,
-
         _patternSpace    : new RegExp("[\t ]"),
         _patternNewline  : new RegExp("[\r\n]"),
         _patternAlphaNum : new RegExp("[a-zA-Z0-9]"),
-
         _debug: true,
 
         /**
@@ -125,35 +122,35 @@
 
         /**
          * 改行コードを統一
-         * @param {string} str
+         * @param {string} chr
          * @returns {string}
          */
-        replaceLineBreak: function(str){
-            return str.split(this._patternNewline).join("\n");
+        replaceLineBreak: function(chr){
+            return chr.split(this._patternNewline).join("\n");
         },
 
         /**
          * 一文字ずつの配列を作成（サロゲートペアは2つで1セット）
-         * @param {string} str
+         * @param {string} chr
          * @returns {Array}
          */
-        getCharArray: function(str){
+        getCharArray: function(chr){
 
             var charAry = [];
-            var hCharCode, lCharCode;
+            var hCode, lCode;
 
-            for (var i= 0,l=str.length; i<l; i++) {
-                hCharCode = str.charCodeAt(i);
+            for (var i= 0,l=chr.length; i<l; i++) {
+                hCode = chr.charCodeAt(i);
                 // 上位サロゲート
-                if ((0xD800 <= hCharCode && hCharCode <= 0xDBFF)) {
-                    lCharCode = str.charCodeAt(i + 1);
+                if ((0xD800 <= hCode && hCode <= 0xDBFF)) {
+                    lCode = chr.charCodeAt(i + 1);
                     // 下位サロゲート
-                    if (0xDC00 <= lCharCode && lCharCode <= 0xDFFF) {
-                        charAry[charAry.length] = String.fromCharCode(hCharCode, lCharCode);
+                    if (0xDC00 <= lCode && lCode <= 0xDFFF) {
+                        charAry[charAry.length] = String.fromCharCode(hCode, lCode);
                     }
                     ++ i;
                 } else {
-                    charAry[charAry.length] = str[i];
+                    charAry[charAry.length] = chr[i];
                 }
             }
 
@@ -162,83 +159,83 @@
 
         /**
          * 空白判定
-         * @param {string} str
+         * @param {string} chr
          * @returns {boolean}
          */
-        isSpace: function(str){
-            return this._patternSpace.test(str);
+        isSpace: function(chr){
+            return this._patternSpace.test(chr);
         },
 
         /**
          * 改行判定
-         * @param {string} str
+         * @param {string} chr
          * @returns {boolean}
          */
-        isLineBreak: function(str){
-            return this._patternNewline.test(str);
+        isLineBreak: function(chr){
+            return this._patternNewline.test(chr);
         },
 
         /**
          * 英数判定
-         * @param {string} str
+         * @param {string} chr
          * @returns {boolean}
          */
-        isAlphaNum: function(str){
-            return this._patternAlphaNum.test(str);
+        isAlphaNum: function(chr){
+            return this._patternAlphaNum.test(chr);
         },
 
         /**
          * 行頭禁則文字
-         * @param {string} str
+         * @param {string} chr
          * @returns {boolean}
          */
-        isNotAllowedStart: function(str){
-            return "）。.,)]｝、〕〉》」』】〙〗〟’”｠»・:;/‐゠–〜～?!‼⁇⁈⁉".indexOf(str) !== -1;
+        isNotAllowedStart: function(chr){
+            return "）。.,)]｝、〕〉》」』】〙〗〟’”｠»・:;/‐゠–〜～?!‼⁇⁈⁉".indexOf(chr) !== -1;
         },
 
         /**
          * 行末禁則文字
-         * @param {string} str
+         * @param {string} chr
          * @returns {boolean}
          */
-        isNotAllowedEnd: function(str){
-            return "（([｛〔〈《「『【〘〖〝‘“｟«".indexOf(str) !== -1;
+        isNotAllowedEnd: function(chr){
+            return "（([｛〔〈《「『【〘〖〝‘“｟«".indexOf(chr) !== -1;
         },
 
         /**
          * 始め括弧
-         * @param {string} str
+         * @param {string} chr
          * @returns {boolean}
          */
-        isOpeningBracket: function(str){
-            return "（([｛〔〈《「『【〘〖〝‘“｟«".indexOf(str) !== -1;
+        isOpeningBracket: function(chr){
+            return "（([｛〔〈《「『【〘〖〝‘“｟«".indexOf(chr) !== -1;
         },
 
         /**
          * 閉じ括弧
-         * @param {string} str
+         * @param {string} chr
          * @returns {boolean}
          */
-        isClosingBracket: function(str){
-            return "）)]｝〕〉》」』】〙〗〟’”｠»".indexOf(str) !== -1;
+        isClosingBracket: function(chr){
+            return "）)]｝〕〉》」』】〙〗〟’”｠»".indexOf(chr) !== -1;
         },
 
         /**
          * 長音符
-         * @param {string} str
+         * @param {string} chr
          * @returns {boolean}
          */
-        isHyphen: function(str){
-            return "ー‐゠–〜～".indexOf(str) !== -1;
+        isHyphen: function(chr){
+            return "ー‐゠–〜～".indexOf(chr) !== -1;
         },
 
         /**
          * 句読点
-         * @param {string} str
+         * @param {string} chr
          * @returns {boolean}
          */
-        isPunctuation: function(str){
-            return "｡。．.、，".indexOf(str) !== -1;
+        isPunctuation: function(chr){
+            return "｡。．.、，".indexOf(chr) !== -1;
         },
 
         /**
@@ -259,95 +256,105 @@
 
         /**
          * 英数字の縦書き
-         * @param {string} str
+         * @param {string} chr
          * @param {number} x
          * @param {number} y
          */
-        fillAlphaNum: function(str, x, y){
-            if (typeof this._imageCache[str] === "undefined") {
+        fillAlphaNum: function(chr, x, y){
+            if (typeof this._imageCache[chr] === "undefined") {
                 this._workContext.rotate(90/180 * Math.PI);
-                this._workContext.fillText(str, 0, 0);
-                this._imageCache[str] = this._workContext.getImageData(0, 0, this.fontSize, this.fontSize);
+                this._workContext.fillText(chr, 0, 0);
+                this._imageCache[chr] = this._workContext.getImageData(0, 0, this.fontSize, this.fontSize);
                 this.resetWorkCanvas();
             }
-            this._mainContext.putImageData(this._imageCache[str], x + this.fontSize / 10, y - this.fontSize + this.fontSize/4);
+            this._mainContext.putImageData(this._imageCache[chr], x + this.fontSize / 10, y - this.fontSize + this.fontSize/4);
         },
 
         /**
          * 長音符の縦書き
-         * @param {string} str
+         * @param {string} chr
          * @param {number} x
          * @param {number} y
          */
-        fillHyphen: function(str, x, y){
+        fillHyphen: function(chr, x, y){
 
-            var image;
+            var cache;
 
-            //if (typeof this._imageCache[str] === "undefined") {
+            if (typeof this._cache[chr] === "undefined") {
+
+                // 回転＋反転
                 this._workContext.rotate(90 / 180 * Math.PI);
                 this._workContext.transform(1, 0, 0, -1, 0, 0);
-                this._workContext.fillText(str, 0, this.fontSize);
 
                 // プリレンダー
-                image = this._workContext.getImageData(0, 0, this.fontSize, this.fontSize);
+                this._workContext.fillText(chr, 0, this.fontSize);
+                var image = this._workContext.getImageData(0, 0, this.fontSize, this.fontSize);
                 var exData = this.getFillExtent(image);
 
                 // 最小範囲で再選択
                 image = this._workContext.getImageData(exData.left, 0, exData.originWidth, this.fontSize);
 
                 this.resetWorkCanvas();
-                this._mainContext.putImageData(
-                    image,
-                    x + exData.horizontalMargin,
-                    y + exData.verticalMargin - this.fontSize
-                );
-            //}
 
-            //image = this._imageCache[str];
+                // イメージキャッシュ
+                cache = this._cache[chr] = {
+                    "image"  : image,
+                    "exData" : exData
+                };
+            }
+            else {
+                cache = this._cache[chr];
+            }
+
+            this._mainContext.putImageData(
+                cache.image,
+                x + cache.exData.horizontalMargin,
+                y + cache.exData.verticalMargin - this.fontSize
+            );
         },
 
         /**
          * 始め括弧の縦書き
-         * @param {string} str
+         * @param {string} chr
          * @param {number} x
          * @param {number} y
          */
-        fillOpeningBracket: function(str, x, y){
-            if (typeof this._imageCache[str] === "undefined") {
+        fillOpeningBracket: function(chr, x, y){
+            if (typeof this._imageCache[chr] === "undefined") {
                 this._workContext.rotate(90/180 * Math.PI);
                 this._workContext.transform(1, 0, 0, -1, 0, 0);
-                this._workContext.fillText(str, 0 , this.fontSize - (this.fontSize/10));
-                this._imageCache[str] = this._workContext.getImageData(0, 0, this.fontSize, this.fontSize);
+                this._workContext.fillText(chr, 0 , this.fontSize - (this.fontSize/10));
+                this._imageCache[chr] = this._workContext.getImageData(0, 0, this.fontSize, this.fontSize);
                 this.resetWorkCanvas();
             }
-            this._mainContext.putImageData(this._imageCache[str] , x, y - this.fontSize - this.fontSize/10);
+            this._mainContext.putImageData(this._imageCache[chr] , x, y - this.fontSize - this.fontSize/10);
         },
 
         /**
          * 閉じ括弧の縦書き
-         * @param {string} str
+         * @param {string} chr
          * @param {number} x
          * @param {number} y
          */
-        fillClosingBracket: function(str, x, y){
-            if (typeof this._imageCache[str] === "undefined") {
+        fillClosingBracket: function(chr, x, y){
+            if (typeof this._imageCache[chr] === "undefined") {
                 this._workContext.rotate(90/180 * Math.PI);
                 this._workContext.transform(1, 0, 0, -1, 0, 0);
-                this._workContext.fillText(str, 0 , this.fontSize - (this.fontSize/10));
-                this._imageCache[str] = this._workContext.getImageData(0, 0, this.fontSize, this.fontSize);
+                this._workContext.fillText(chr, 0 , this.fontSize - (this.fontSize/10));
+                this._imageCache[chr] = this._workContext.getImageData(0, 0, this.fontSize, this.fontSize);
                 this.resetWorkCanvas();
             }
-            this._mainContext.putImageData(this._imageCache[str], x, y - (this.fontSize/2));
+            this._mainContext.putImageData(this._imageCache[chr], x, y - (this.fontSize/2));
         },
 
         /**
          * 句読点の位置調節
-         * @param {string} str
+         * @param {string} chr
          * @param {number} x
          * @param {number} y
          */
-        fillPunctuation: function(str, x, y){
-            this._mainContext.fillText(str, x    + this.fontSize / 2, y - this.fontSize / 2);
+        fillPunctuation: function(chr, x, y){
+            this._mainContext.fillText(chr, x    + this.fontSize / 2, y - this.fontSize / 2);
         },
 
         /**
