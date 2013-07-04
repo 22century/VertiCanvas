@@ -40,6 +40,7 @@
         fontSize         : 16,
         fontFamily       : "serif",
         lineHeight       : 10,
+        debug            : false,
 
         // private
         _charAry         : [],
@@ -56,7 +57,6 @@
         _patternSpace    : new RegExp("[\t ]"),
         _patternNewline  : new RegExp("[\r\n]"),
         _patternAlphaNum : new RegExp("[a-zA-Z0-9]"),
-        _debug: true,
 
         /**
          * initialize
@@ -239,6 +239,15 @@
         },
 
         /**
+         * リーダー、省略記号
+         * @param {string} chr
+         * @returns {boolean}
+         */
+        isEllipsis: function(chr){
+            return "‥…".indexOf(chr) !== -1;
+        },
+
+        /**
          * メインCanvasの消去
          */
         resetMainCanvas: function(){
@@ -355,6 +364,22 @@
          */
         fillPunctuation: function(chr, x, y){
             this._mainContext.fillText(chr, x    + this.fontSize / 2, y - this.fontSize / 2);
+        },
+
+        /**
+         * 英数字の縦書き
+         * @param {string} chr
+         * @param {number} x
+         * @param {number} y
+         */
+        fillEllipsis: function(chr, x, y){
+            if (typeof this._imageCache[chr] === "undefined") {
+                this._workContext.rotate(90/180 * Math.PI);
+                this._workContext.fillText(chr, 0, 0);
+                this._imageCache[chr] = this._workContext.getImageData(0, 0, this.fontSize, this.fontSize);
+                this.resetWorkCanvas();
+            }
+            this._mainContext.putImageData(this._imageCache[chr], x + this.fontSize / 10, y - this.fontSize + this.fontSize/10);
         },
 
         /**
@@ -529,6 +554,10 @@
                 // 句読点
                 else if (this.isPunctuation(chr)) {
                     this.fillPunctuation(chr, x, y);
+                }
+                // 省略記号
+                else if (this.isEllipsis(chr)) {
+                    this.fillEllipsis(chr, x, y);
                 }
                 // その他
                 else {
